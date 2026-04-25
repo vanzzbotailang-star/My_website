@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuantumCalc Pro | XSO</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0a0a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+        }
+
+        /* BACKGROUND ANIMASI MATRIX */
+        .matrix-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            opacity: 0.15;
+        }
+
+        canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 0;
+        }
+
+        /* KONTAINER UTAMA */
+        .calc-container {
+            position: relative;
+            z-index: 1;
+            background: linear-gradient(145deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            border-radius: 30px;
+            padding: 30px;
+            box-shadow: 
+                0 0 60px rgba(0, 255, 255, 0.3),
+                0 0 120px rgba(138, 43, 226, 0.2),
+                inset 0 0 30px rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(0, 255, 255, 0.2);
+            width: 500px;
+            backdrop-filter: blur(10px);
+        }
+
+        /* HEADER */
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            background: linear-gradient(135deg, #00ffff, #ff00ff, #00ffff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 2em;
+            letter-spacing: 3px;
+            text-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { filter: drop-shadow(0 0 5px #00ffff); }
+            to { filter: drop-shadow(0 0 20px #ff00ff); }
+        }
+
+        .mode-indicator {
+            color: #00ff88;
+            font-size: 12px;
+            letter-spacing: 5px;
+            margin-top: 5px;
+        }
+
+        /* DISPLAY */
+        .display-section {
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8);
+        }
+
+        .expression-display {
+            color: #666;
+            text-align: right;
+            font-size: 1.2em;
+            min-height: 30px;
+            word-break: break-all;
+            letter-spacing: 2px;
+        }
+
+        .main-display {
+            color: #00ffff;
+            text-align: right;
+            font-size: 3em;
+            font-weight: bold;
+            min-height: 60px;
+            word-break: break-all;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+            letter-spacing: 3px;
+        }
+
+        .result-display {
+            color: #ff00ff;
+            text-align: right;
+            font-size: 1.5em;
+            min-height: 25px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* MODE SELECTOR */
+        .mode-tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 15px;
+        }
+
+        .mode-tab {
+            flex: 1;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            color: #888;
+            cursor: pointer;
+            text-align: center;
+            font-size: 11px;
+            letter-spacing: 1px;
+            transition: all 0.3s;
+        }
+
+        .mode-tab.active {
+            background: rgba(0, 255, 255, 0.15);
+            border-color: #00ffff;
+            color: #00ffff;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+        }
+
+        .mode-tab:hover {
+            border-color: #ff00ff;
+            color: #ff00ff;
+        }
+
+        /* TOMBOL GRID */
+        .buttons-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+        }
+
+        button {
+            padding: 15px 5px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* JENIS TOMBOL */
+        .btn-number {
+            background: rgba(30, 30, 50, 0.8);
+            color: #e0e0e0;
+        }
+
+        .btn-number:hover {
+            background: rgba(0, 255, 255, 0.2);
+            border-color: #00ffff;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .btn-operator {
+            background: rgba(138, 43, 226, 0.3);
+            color: #bb86fc;
+            border-color: rgba(138, 43, 226, 0.5);
+        }
+
+        .btn-operator:hover {
+            background: rgba(138, 43, 226, 0.5);
+            box-shadow: 0 0 20px rgba(138, 43, 226, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .btn-function {
+            background: rgba(255, 105, 180, 0.2);
+            color: #ff69b4;
+            border-color: rgba(255, 105, 180, 0.4);
+        }
+
+        .btn-function:hover {
+            background: rgba(255, 105, 180, 0.4);
+            box-shadow: 0 0 20px rgba(255, 105, 180, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .btn-equals {
+            background: linear-gradient(135deg, #00ffff, #ff00ff);
+            color: #000;
+            border: none;
+            font-size: 1.5em;
+            grid-row: span 2;
+        }
+
+        .btn-equals:hover {
+            box-shadow: 0 0 40px rgba(0, 255, 255, 0.8), 0 0 80px rgba(255, 0, 255, 0.5);
+            transform: scale(1.05);
+        }
+
+        .btn-clear {
+            background: rgba(255, 50, 50, 0.3);
+            color: #ff4444;
+            border-color: rgba(255, 50, 50, 0.5);
+        }
+
+        .btn-clear:hover {
+            background: rgba(255, 50, 50, 0.5);
+            box-shadow: 0 0 20px rgba(255, 50, 50, 0.5);
+        }
+
+        .btn-memory {
+            background: rgba(255, 215, 0, 0.2);
+            color: #ffd700;
+            border-color: rgba(255, 215, 0, 0.4);
+            font-size: 0.8em;
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        /* HISTORY PANEL */
+        .history-panel {
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .history-item {
+            color: #666;
+            font-size: 0.8em;
+            padding: 5px;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.2s;
+        }
+
+        .history-item:hover {
+            color: #00ffff;
+            background: rgba(0, 255, 255, 0.05);
+        }
+
+        /* SCROLLBAR */
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #00ffff;
+            border-radius: 10px;
+        }
+
+        /* CONVERSION DISPLAY */
+        .conversion-row {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 5px;
+            font-size: 0.7em;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- MATRIX BACKGROUND -->
+    <canvas class="matrix-bg" id="matrixBg"></canvas>
+
+    <!-- KALKULATOR -->
+    <div class="calc-container">
+        <div class="header">
+            <h1>⚛ QUANTUMCALC PRO</h1>
+            <div class="mode-indicator" id="modeIndicator">✦ STANDARD MODE ✦</div>
+        </div>
+
+        <div class="mode-tabs">
+            <div class="mode-tab active" onclick="switchMode('standard')">STANDARD</div>
+            <div class="mode-tab" onclick="switchMode('scientific')">SCIENTIFIC</div>
+            <div class="mode-tab" onclick="switchMode('programmer')">PROGRAMMER</div>
+            <div class="mode-tab" onclick="switchMode('converter')">CONVERTER</div>
+        </div>
+
+        <div class="display-section">
+            <div class="expression-display" id="expressionDisplay"></div>
+            <div class="main-display" id="mainDisplay">0</div>
+            <div class="result-display" id="resultDisplay"></div>
+            <div class="conversion-row" id="conversionRow"></div>
+        </div>
+
+        <div class="buttons-grid" id="buttonsGrid">
+            <!-- Tombol akan digenerate oleh JavaScript -->
+        </div>
+
+        <div class="history-panel" id="historyPanel">
+            <div style="color:#ffd700; font-size:0.8em; margin-bottom:5px;">📜 HISTORY</div>
+            <div id="historyList">
+                <div class="history-item" style="color:#444;">No history yet...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // =====================================================
+        // QUANTUMCALC PRO — FULL FEATURED CALCULATOR
+        // =====================================================
+
+        // --- MATRIX BACKGROUND ANIMATION ---
+        const canvas = document.getElementById('matrixBg');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const chars = '01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン';
+        const fontSize = 14;
+        const columns = canvas.width / fontSize;
+        const drops = Array(Math.floor(columns)).fill(1);
+
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#0F0';
+            ctx.font = fontSize + 'px monospace';
+
+            for (let i = 0; i < drops.length; i++) {
+                const text = chars[Math.floor(Math.random() * chars.length)];
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            }
+        }
+        setInterval(drawMatrix, 50);
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        // --- STATE ---
+        let currentMode = 'standard';
+        let currentInput = '0';
+        let expression = '';
+        let previousAnswer = null;
+        let memory = 0;
+        let history = [];
+        let waitingForOperand = false;
+
+        // --- DISPLAY ELEMENTS ---
+        const mainDisplay = document.getElementById('mainDisplay');
+        const expressionDisplay = document.getElementById('expressionDisplay');
+        const resultDisplay = document.getElementById('resultDisplay');
+        const conversionRow = document.getElementById('conversionRow');
+        const historyList = document.getElementById('historyList');
+        const modeIndicator = document.getElementById('modeIndicator');
+        const buttonsGrid = document.getElementById('buttonsGrid');
+
+        // --- MODE SWITCHING ---
+        function switchMode(mode) {
+            currentMode = mode;
+            document.querySelectorAll('.mode-tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+
+            switch (mode) {
+                case 'standard':
+                    modeIndicator.textContent = '✦ STANDARD MODE ✦';
+                    break;
+                case 'scientific':
+                    modeIndicator.textContent = '⚡ SCIENTIFIC MODE ⚡';
+                    break;
+                case 'programmer':
+                    modeIndicator.textContent = '💻 PROGRAMMER MODE 💻';
+                    break;
+                case 'converter':
+                    modeIndicator.textContent = '🔄 CONVERTER MODE 🔄';
+                    break;
+            }
+            renderButtons();
+            clearAll();
+        }
+
+        // --- RENDER BUTTONS BASED ON MODE ---
+        function renderButtons() {
+            let buttons = [];
+
+            if (currentMode === 'standard') {
+                buttons = [
+                    { text: 'MC', class: 'btn-memory', action: 'memoryClear' },
+                    { text: 'MR', class: 'btn-memory', action: 'memoryRecall' },
+                    { text: 'M+', class: 'btn-memory', action: 'memoryAdd' },
+                    { text: 'M-', class: 'btn-memory', action: 'memorySubtract' },
+                    { text: 'C', class: 'btn-clear', action: 'clearAll' },
+
+                    { text: '%', class: 'btn-operator', action: 'percent' },
+                    { text: '√', class: 'btn-function', action: 'sqrt' },
+                    { text: 'x²', class: 'btn-function', action: 'square' },
+                    { text: '1/x', class: 'btn-function', action: 'reciprocal' },
+                    { text: '⌫', class: 'btn-clear', action: 'backspace' },
+
+                    { text: '7', class: 'btn-number', action: '7' },
+                    { text: '8', class: 'btn-number', action: '8' },
+                    { text: '9', class: 'btn-number', action: '9' },
+                    { text: '÷', class: 'btn-operator', action: '/' },
+                    { text: 'π', class: 'btn-function', action: 'pi' },
+
+                    { text: '4', class: 'btn-number', action: '4' },
+                    { text: '5', class: 'btn-number', action: '5' },
+                    { text: '6', class: 'btn-number', action: '6' },
+                    { text: '×', class: 'btn-operator', action: '*' },
+                    { text: 'e', class: 'btn-function', action: 'euler' },
+
+                    { text: '1', class: 'btn-number', action: '1' },
+                    { text: '2', class: 'btn-number', action: '2' },
+                    { text: '3', class: 'btn-number', action: '3' },
+                    { text: '−', class: 'btn-operator', action: '-' },
+                    { text: 'ANS', class: 'btn-function', action: 'ans' },
+
+                    { text: '±', class: 'btn-function', action: 'negate' },
+                    { text: '0', class: 'btn-number', action: '0' },
+                    { text: '.', class: 'btn-number', action: '.' },
+                    { text: '+', class: 'btn-operator', action: '+' },
+                    { text: '=', class: 'btn-equals', action: 'calculate' },
+                ];
+            } else if (currentMode === 'scientific') {
+                buttons = [
+                    { text: 'sin', class: 'btn-function', action: 'sin' },
+                    { text: 'cos', class: 'btn-function', action: 'cos' },
+                    { text: 'tan', class: 'btn-function', action: 'tan' },
+                    { text: 'log', class: 'btn-function', action: 'log' },
+                    { text: 'ln', class: 'btn-function', action: 'ln' },
+
+                    { text: 'sin⁻¹', class: 'btn-function', action: 'asin' },
+                    { text: 'cos⁻¹', class: 'btn-function', action: 'acos' },
+                    { text: 'tan⁻¹', class: 'btn-function', action: 'atan' },
+                    { text: '10ˣ', class: 'btn-function', action: 'tenpow' },
+                    { text: 'C', class: 'btn-clear', action: 'clearAll' },
+
+                    { text: '7', class: 'btn-number', action: '7' },
+                    { text: '8', class: 'btn-number', action: '8' },
+                    { text: '9', class: 'btn-number', action: '9' },
+                    { text: '÷', class: 'btn-operator', action: '/' },
+                    { text: '⌫', class: 'btn-clear', action: 'backspace' },
+
+                    { text: '4', class: 'btn-number', action: '4' },
+                    { text: '5', class: 'btn-number', action: '5' },
+                    { text: '6', class: 'btn-number', action: '6' },
+                    { text: '×', class: 'btn-operator', action: '*' },
+                    { text: '(', class: 'btn-operator', action: '(' },
+
+                    { text: '1', class: 'btn-number', action: '1' },
+                    { text: '2', class: 'btn-number', action: '2' },
+                    { text: '3', class: 'btn-number', action: '3' },
+                    { text: '−', class: 'btn-operator', action: '-' },
+                    { text: ')', class: 'btn-operator', action: ')' },
+
+                    { text: 'π', class: 'btn-function', action: 'pi' },
+                    { text: '0', class: 'btn-number', action: '0' },
+                    { text: '.', class: 'btn-number', action: '.' },
+                    { text: '+', class: 'btn-operator', action: '+' },
+                    { text: '=', class: 'btn-equals', action: 'calculate' },
+                ];
+            } else if (currentMode === 'programmer') {
+                buttons = [
+                    { text: 'HEX', class: 'btn-function', action: 'hex' },
+                    { text: 'DEC', class: 'btn-function', action: 'dec' },
+                    { text: 'OCT', class: 'btn-function', action: 'oct' },
+                    { text: 'BIN', class: 'btn-function', action: 'bin' },
+                    { text: 'C', class: 'btn-clear', action: 'clearAll' },
+
+                    { text: 'AND', class: 'btn-operator', action: '&' },
+                    { text: 'OR', class: 'btn-operator', action: '|' },
+                    { text: 'XOR', class: 'btn-operator', action: '^' },
+                    { text: 'NOT', class: 'btn-function', action: '~' },
+                    { text: '⌫', class: 'btn-clear', action: 'backspace' },
+
+                    { text: 'A', class: 'btn-number', action: 'A' },
+                    { text: 'B', class: 'btn-number', action: 'B' },
+                    { text: 'C', class: 'btn-number', action: 'C' },
+                    { text: 'D', class: 'btn-number', action: 'D' },
+                    { text: 'E', class: 'btn-number', action: 'E' },
+
+                    { text: '7', class: 'btn-number', action: '7' },
+                    { text: '8', class: 'btn-number', action: '8' },
+                    { text: '9', class: 'btn-number', action: '9' },
+                    { text: 'F', class: 'btn-number', action: 'F' },
+                    { text: '<<', class: 'btn-operator', action: '<<' },
+
+                    { text: '4', class: 'btn-number', action: '4' },
+                    { text: '5', class: 'btn-number', action: '5' },
+                    { text: '6', class: 'btn-number', action: '6' },
+                    { text: 'MOD', class: 'btn-operator', action: '%' },
+                    { text: '>>', class: 'btn-operator', action: '>>' },
+
+                    { text: '1', class: 'btn-number', action: '1' },
+                    { text: '2', class: 'btn-number', action: '2' },
+                    { text: '3', class: 'btn-number', action: '3' },
+                    { text: '+', class: 'btn-operator', action: '+' },
+                    { text: '=', class: 'btn-equals', action: 'calculate' },
+                ];
+            } else if (currentMode === 'converter') {
+                buttons = [
+                    { text: 'm→ft', class: 'btn-function', action: 'mToFt' },
+                    { text: 'kg→lb', class: 'btn-function', action: 'kgToLb' },
+                 
